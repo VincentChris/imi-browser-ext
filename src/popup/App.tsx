@@ -1,28 +1,29 @@
 import { useEffect, useRef, useState } from "react";
-import { sendMessage, type CookieSyncResponse } from "../shared/messages";
+import { CookieSyncPanel } from "./components/CookieSyncPanel";
+import { CountrySwitcherPanel } from "./components/CountrySwitcherPanel";
+import { Sidebar } from "./components/Sidebar";
+import { Toast } from "./components/Toast";
+import {
+  ACTIVE_TAB_STORAGE_KEY,
+  SAVE_DEBOUNCE_MS,
+  STORAGE_KEY,
+  TOAST_DURATION_MS
+} from "./constants";
+import { useActiveTabUrl } from "./hooks/useActiveTabUrl";
+import { useCookieSync } from "./hooks/useCookieSync";
+import type { PersistedInputs, TabId, ToastState, ToastType } from "./types";
 
-type PersistedInputs = {
-  targetDomain?: string;
-  cookieKey?: string;
-};
-
-const STORAGE_KEY = "imi.cookieSync.inputs";
-const SAVE_DEBOUNCE_MS = 400;
-const TOAST_DURATION_MS = 2600;
-
-type ToastType = "success" | "error" | "info";
-type ToastState = {
-  message: string;
-  type: ToastType;
-};
+const getActiveTabId = (value: unknown): TabId =>
+  value === "countrySwitcher" ? "countrySwitcher" : "cookieSync";
 
 export const App = () => {
   const [targetDomain, setTargetDomain] = useState("");
   const [cookieKey, setCookieKey] = useState("");
   const [toast, setToast] = useState<ToastState | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
+  const [activeTab, setActiveTab] = useState<TabId>("cookieSync");
   const saveTimerRef = useRef<number | null>(null);
   const toastTimerRef = useRef<number | null>(null);
+  const { url: currentTabUrl, isLocalhost } = useActiveTabUrl();
 
   useEffect(() => {
     chrome.storage.local
@@ -36,6 +37,32 @@ export const App = () => {
         // Ignore storage errors; defaults stay empty.
       });
   }, []);
+
+  useEffect(() => {
+    chrome.storage.local
+      .get(ACTIVE_TAB_STORAGE_KEY)
+      .then((result: Record<string, unknown>) => {
+        const stored = result[ACTIVE_TAB_STORAGE_KEY];
+        setActiveTab(getActiveTabId(stored));
+      })
+      .catch(() => {
+        // Ignore storage errors.
+      });
+  }, []);
+
+  useEffect(() => {
+    if (!isLocalhost && activeTab === "countrySwitcher") {
+      setActiveTab("cookieSync");
+    }
+  }, [activeTab, isLocalhost]);
+
+  useEffect(() => {
+    chrome.storage.local
+      .set({ [ACTIVE_TAB_STORAGE_KEY]: activeTab })
+      .catch(() => {
+        // Ignore storage errors.
+      });
+  }, [activeTab]);
 
   useEffect(() => {
     if (saveTimerRef.current) {
@@ -77,91 +104,42 @@ export const App = () => {
     }, TOAST_DURATION_MS);
   };
 
-  const handleSync = async () => {
-    const trimmedDomain = targetDomain.trim();
-    const trimmedKey = cookieKey.trim();
-    if (!trimmedDomain) {
-      showToast("请输入同步域名", "error");
-      return;
-    }
-    if (!trimmedKey) {
-      showToast("请输入 cookie key", "error");
-      return;
-    }
+  const { isLoading, sync } = useCookieSync(showToast);
 
-    setIsLoading(true);
-    try {
-      const response = await sendMessage<CookieSyncResponse>({
-        type: "COOKIE_SYNC_REQUEST",
-        payload: { targetDomain: trimmedDomain, cookieKey: trimmedKey }
-      });
-      if (response.ok && response.sourceDomain) {
-        showToast(`${response.message}（来源：${response.sourceDomain}）`, "success");
-      } else {
-        showToast(response.message, response.ok ? "success" : "error");
-      }
-    } catch (error) {
-      const message = error instanceof Error ? error.message : "同步失败";
-      showToast(message, "error");
-    } finally {
-      setIsLoading(false);
+  const tabs = [
+    { id: "cookieSync" as const, label: "Cookie Sync", enabled: true },
+    {
+      id: "countrySwitcher" as const,
+      label: "切换国家",
+      enabled: isLocalhost,
+      disabledReason: "只能在localhost下使用"
     }
-  };
-
-  const toastClassName = toast
-    ? toast.type === "success"
-      ? "border-emerald-400/40 bg-emerald-500/15 text-emerald-100"
-      : toast.type === "error"
-        ? "border-rose-400/40 bg-rose-500/15 text-rose-100"
-        : "border-slate-400/40 bg-slate-500/15 text-slate-100"
-    : "";
+  ];
 
   return (
-    <div className="relative flex h-full w-full flex-col gap-4 p-4 text-sm text-slate-100">
-      {toast ? (
-        <div className="pointer-events-none absolute left-4 right-4 top-3 z-10">
-          <div
-            className={`rounded-md border px-3 py-2 text-xs shadow-lg backdrop-blur ${toastClassName}`}
-          >
-            {toast.message}
-          </div>
-        </div>
-      ) : null}
-      <header className="space-y-1">
-        <h1 className="text-lg font-semibold">imi cookie sync</h1>
-        <p className="text-xs text-slate-400">从当前 tab 读取 cookie，并同步到目标域名</p>
-      </header>
+    <div className="flex h-full w-full text-sm text-slate-100">
+      <Sidebar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
 
-      <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/70 p-3">
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-slate-300">同步域名</span>
-          <input
-            className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-500 focus:outline-none"
-            placeholder="example.com"
-            value={targetDomain}
-            onChange={(event) => setTargetDomain(event.target.value)}
-          />
-        </label>
-        <label className="flex flex-col gap-1">
-          <span className="text-xs text-slate-300">Cookie key</span>
-          <input
-            className="rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-500 focus:outline-none"
-            placeholder="SESSION_ID"
-            value={cookieKey}
-            onChange={(event) => setCookieKey(event.target.value)}
-          />
-        </label>
-        <button
-          type="button"
-          className="rounded-md bg-sky-500 px-3 py-2 text-sm font-semibold text-slate-950 transition hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400"
-          onClick={handleSync}
-          disabled={isLoading}
-        >
-          {isLoading ? "同步中..." : "同步"}
-        </button>
-      </section>
+      <main className="relative flex min-w-0 flex-1 flex-col gap-4 p-4">
+        <Toast toast={toast} />
 
-      <footer className="text-xs text-slate-500">Version 0.1.0</footer>
+        {activeTab === "cookieSync" ? (
+          <CookieSyncPanel
+            targetDomain={targetDomain}
+            cookieKey={cookieKey}
+            isLoading={isLoading}
+            onTargetDomainChange={setTargetDomain}
+            onCookieKeyChange={setCookieKey}
+            onSync={() => sync(targetDomain, cookieKey)}
+          />
+        ) : (
+          <CountrySwitcherPanel
+            currentTabUrl={currentTabUrl}
+            isLocalhost={isLocalhost}
+            showToast={showToast}
+          />
+        )}
+      </main>
     </div>
   );
 };
