@@ -81,6 +81,10 @@ const handleCookieSync = async (
     return { ok: false, message: "同步域名不合法" };
   }
 
+  if (targetDomain === url.hostname) {
+    return { ok: false, message: "同步域名和被同步域名重复" };
+  }
+
   if (isSameOrParentDomain(targetDomain, url.hostname)) {
     return { ok: false, message: "目标域名不能影响当前页面 cookie" };
   }
