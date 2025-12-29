@@ -78,18 +78,30 @@ export const CountrySwitcherPanel = ({
 
   return (
     <>
-      <header className="space-y-1">
-        <h1 className="text-lg font-semibold">切换国家</h1>
-        <p className="text-xs text-slate-400">选择国家后写入 TIMEZONE_COUNTRY 与 TIMEZONE</p>
+      <header className="space-y-2">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[11px] uppercase tracking-[0.35em] text-slate-400">
+              Localization
+            </p>
+            <h1 className="text-xl font-semibold text-white">切换国家</h1>
+          </div>
+          <div className="rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] uppercase tracking-[0.2em] text-slate-300">
+            {isLocalhost ? "LOCAL ONLY" : "LOCKED"}
+          </div>
+        </div>
+        <p className="text-xs text-slate-300">选择国家后写入 TIMEZONE_COUNTRY 与 TIMEZONE。</p>
       </header>
 
-      <section className="space-y-3 rounded-lg border border-slate-800 bg-slate-900/70 p-3">
+      <section className="space-y-3 rounded-2xl border border-white/10 bg-white/5 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.04)]">
         <div className="space-y-1">
-          <span className="text-xs text-slate-300">国家选择</span>
+          <span className="text-[11px] uppercase tracking-[0.2em] text-slate-300">
+            国家选择
+          </span>
           <div className="relative" ref={dropdownRef}>
             <button
               type="button"
-              className="flex w-full items-center justify-between rounded-md border border-slate-700 bg-slate-950 px-2 py-1 text-sm text-slate-100 focus:border-slate-500 focus:outline-none disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex w-full items-center justify-between rounded-xl border border-white/10 bg-slate-950/60 px-3 py-2 text-sm text-slate-100 transition focus:border-cyan-300/60 focus:outline-none focus:ring-2 focus:ring-cyan-300/15 disabled:cursor-not-allowed disabled:opacity-50"
               disabled={!isLocalhost || isSaving}
               onClick={() => setIsDropdownOpen((prev) => !prev)}
             >
@@ -97,11 +109,11 @@ export const CountrySwitcherPanel = ({
               <span className="text-slate-500">{isDropdownOpen ? "▲" : "▼"}</span>
             </button>
             {isDropdownOpen ? (
-              <div className="absolute left-0 right-0 top-[calc(100%+6px)] z-10 rounded-md border border-slate-800 bg-slate-950 p-2 shadow-lg">
+              <div className="absolute left-0 right-0 top-[calc(100%+8px)] z-10 rounded-xl border border-white/10 bg-slate-950/95 p-2 shadow-[0_24px_60px_-30px_rgba(0,0,0,0.9)]">
                 <Input
                   inputRef={searchInputRef}
                   type="text"
-                  className="mb-2 w-full bg-slate-900"
+                  className="mb-2 w-full bg-slate-950/60"
                   placeholder="输入国家名称"
                   value={searchTerm}
                   onChange={(event) => setSearchTerm(event.target.value)}
@@ -116,15 +128,15 @@ export const CountrySwitcherPanel = ({
                         <button
                           key={option.countryName}
                           type="button"
-                          className={`flex w-full items-center justify-between rounded-md px-2 py-1 text-left text-xs transition ${
+                          className={`flex w-full items-center justify-between rounded-lg px-2 py-1 text-left text-xs transition ${
                             isSelected
-                              ? "bg-slate-800 text-slate-100"
-                              : "text-slate-300 hover:bg-slate-900 hover:text-slate-100"
+                              ? "bg-white/10 text-white"
+                              : "text-slate-200 hover:bg-white/5 hover:text-white"
                           }`}
                           onClick={() => handleSelectionChange(option.countryName)}
                         >
                           <span>{option.countryName}</span>
-                          <span className="text-[10px] text-slate-500">UTC{option.timeZone}</span>
+                          <span className="text-[10px] text-slate-400">UTC{option.timeZone}</span>
                         </button>
                       );
                     })
@@ -134,7 +146,7 @@ export const CountrySwitcherPanel = ({
             ) : null}
           </div>
         </div>
-        <div className="text-xs text-slate-500">{isSaving ? "正在写入 cookie..." : ""}</div>
+        <div className="text-[11px] text-slate-300">{isSaving ? "正在写入 cookie..." : ""}</div>
       </section>
     </>
   );

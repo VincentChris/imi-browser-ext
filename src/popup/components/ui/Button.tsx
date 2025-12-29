@@ -6,13 +6,13 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const baseClassName =
-  "rounded-md px-3 py-2 text-sm font-semibold transition focus:outline-none";
+  "relative inline-flex items-center justify-center rounded-xl px-3 py-2 text-sm font-semibold transition duration-200 focus:outline-none focus-visible:ring-2 focus-visible:ring-cyan-300/70 focus-visible:ring-offset-0";
 
 const variants = {
   primary:
-    "bg-sky-500 text-slate-950 hover:bg-sky-400 disabled:cursor-not-allowed disabled:bg-slate-700 disabled:text-slate-400",
+    "bg-gradient-to-r from-cyan-300 via-sky-300 to-indigo-300 text-slate-950 shadow-[0_10px_24px_-14px_rgba(126,249,255,0.7)] hover:brightness-110 disabled:cursor-not-allowed disabled:bg-slate-800 disabled:text-slate-500 disabled:shadow-none disabled:hover:brightness-100",
   secondary:
-    "border border-slate-700 bg-slate-950 text-slate-100 hover:bg-slate-900 disabled:cursor-not-allowed disabled:opacity-50"
+    "border border-white/10 bg-white/5 text-slate-100 hover:border-white/20 hover:bg-white/10 disabled:cursor-not-allowed disabled:opacity-50"
 };
 
 export const Button = ({ variant = "primary", className, ...props }: ButtonProps) => {

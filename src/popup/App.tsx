@@ -117,29 +117,37 @@ export const App = () => {
   ];
 
   return (
-    <div className="flex h-full w-full text-sm text-slate-100">
-      <Sidebar tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className="h-full w-full p-3 text-[13px] text-white/90">
+      <div className="relative flex h-full overflow-hidden rounded-2xl border border-white/10 bg-slate-950/60 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.9)] backdrop-blur">
+        <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_top_right,rgba(126,249,255,0.08),transparent_45%),radial-gradient(circle_at_bottom_left,rgba(255,127,214,0.08),transparent_45%)]" />
+        <Sidebar
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={setActiveTab}
+          isLocalhost={isLocalhost}
+        />
 
-      <main className="relative flex min-w-0 flex-1 flex-col gap-4 p-4">
-        <Toast toast={toast} />
+        <main className="relative flex min-w-0 flex-1 flex-col gap-5 p-5">
+          <Toast toast={toast} />
 
-        {activeTab === "cookieSync" ? (
-          <CookieSyncPanel
-            targetDomain={targetDomain}
-            cookieKey={cookieKey}
-            isLoading={isLoading}
-            onTargetDomainChange={setTargetDomain}
-            onCookieKeyChange={setCookieKey}
-            onSync={() => sync(targetDomain, cookieKey)}
-          />
-        ) : (
-          <CountrySwitcherPanel
-            currentTabUrl={currentTabUrl}
-            isLocalhost={isLocalhost}
-            showToast={showToast}
-          />
-        )}
-      </main>
+          {activeTab === "cookieSync" ? (
+            <CookieSyncPanel
+              targetDomain={targetDomain}
+              cookieKey={cookieKey}
+              isLoading={isLoading}
+              onTargetDomainChange={setTargetDomain}
+              onCookieKeyChange={setCookieKey}
+              onSync={() => sync(targetDomain, cookieKey)}
+            />
+          ) : (
+            <CountrySwitcherPanel
+              currentTabUrl={currentTabUrl}
+              isLocalhost={isLocalhost}
+              showToast={showToast}
+            />
+          )}
+        </main>
+      </div>
     </div>
   );
 };
